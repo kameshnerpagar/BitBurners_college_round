@@ -44,7 +44,7 @@ export default function BenchmarkResults() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', marginBottom: '28px' }}>
-      
+
       {/* ───────────────────────────────────────────────────────────────────
           1. THREE-WAY SYSTEM COMPARISON BENCHMARK (Held-Out Test Cases)
       ────────────────────────────────────────────────────────────────────── */}
@@ -58,7 +58,7 @@ export default function BenchmarkResults() {
               </h2>
             </div>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px', maxWidth: '780px' }}>
-              Evaluation across {heldOutMetrics?.dataset_size || '8 unseen held-out cases, 42 atomic claims'} never used during prompt tuning. 
+              Evaluation across {heldOutMetrics?.dataset_size || '8 unseen held-out cases, 42 atomic claims'} never used during prompt tuning.
               {heldOutMetrics?.annotation_method || ' Ground-truth labels independently assigned by our team via verbatim text inspection.'}
             </p>
           </div>
@@ -184,7 +184,7 @@ export default function BenchmarkResults() {
         )}
 
         {/* Multiclass Confusion Matrix & Per-Class F1 Table */}
-        {perClass && confusionMatrix && (
+        {/* {perClass && confusionMatrix && (
           <div style={{
             background: 'var(--bg-elevated)',
             border: '1px solid var(--border-color)',
@@ -231,7 +231,7 @@ export default function BenchmarkResults() {
               })}
             </div>
 
-            {/* Compact 4x4 Grid */}
+            
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem', fontFamily: 'var(--font-mono)' }}>
                 <thead>
@@ -271,7 +271,7 @@ export default function BenchmarkResults() {
               </table>
             </div>
           </div>
-        )}
+        )} */}
 
         {/* 8 Held-Out Case Breakdown */}
         {heldOutMetrics?.case_results && (
@@ -310,7 +310,7 @@ export default function BenchmarkResults() {
       {/* ───────────────────────────────────────────────────────────────────
           2. IN-SAMPLE DEV BENCHMARK RESULTS (6 Standard Demo Cases)
       ────────────────────────────────────────────────────────────────────── */}
-      <div className="glass-panel" style={{ padding: '24px' }}>
+      {/* <div className="glass-panel" style={{ padding: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <BarChart3 size={20} color="var(--brand-accent)" />
@@ -335,7 +335,6 @@ export default function BenchmarkResults() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-          {/* Accuracy */}
           <div style={{ padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
               <CheckCircle2 size={16} />
@@ -349,7 +348,6 @@ export default function BenchmarkResults() {
             </div>
           </div>
 
-          {/* Planted Errors Caught */}
           <div style={{ padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
               <ShieldAlert size={16} />
@@ -363,7 +361,6 @@ export default function BenchmarkResults() {
             </div>
           </div>
 
-          {/* False Positive Rate */}
           <div style={{ padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
               <ShieldAlert size={16} />
@@ -377,7 +374,6 @@ export default function BenchmarkResults() {
             </div>
           </div>
 
-          {/* Contradicted Precision */}
           <div style={{ padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-secondary)', marginBottom: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -395,8 +391,7 @@ export default function BenchmarkResults() {
               Recall: {metrics.recall_contradicted}% • FPR: {metrics.fpr_contradicted ?? 0}%
             </div>
           </div>
-          
-          {/* Unsupported Precision */}
+
           <div style={{ padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-secondary)', marginBottom: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -415,7 +410,6 @@ export default function BenchmarkResults() {
             </div>
           </div>
 
-          {/* Ambiguous Precision */}
           <div style={{ padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-secondary)', marginBottom: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -435,7 +429,7 @@ export default function BenchmarkResults() {
           </div>
         </div>
 
-        {/* Per-case breakdown */}
+        
         <div>
           <h3 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '10px' }}>
             Development Cases Breakdown
@@ -444,9 +438,9 @@ export default function BenchmarkResults() {
             {metrics.case_results.map((c) => {
               const isControl = c.is_control || c.total_errors === 0 || c.id === 'fully_correct';
               return (
-                <div key={c.id} style={{ 
-                  background: 'var(--bg-elevated)', 
-                  border: '1px solid var(--border-color)', 
+                <div key={c.id} style={{
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border-color)',
                   borderRadius: 'var(--radius-sm)',
                   padding: '8px 12px',
                   fontSize: '0.82rem'
@@ -466,7 +460,7 @@ export default function BenchmarkResults() {
             })}
           </div>
         </div>
-      </div>
+      </div> */}
 
     </div>
   );
