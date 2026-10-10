@@ -155,9 +155,9 @@ export default function App() {
         zIndex: 50,
       }}>
         <div style={{
-          maxWidth: '1360px',
+          maxWidth: '1100px',
           margin: '0 auto',
-          padding: '10px 24px',
+          padding: '12px 24px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -167,16 +167,16 @@ export default function App() {
           {/* Logo & Brand */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(135deg, var(--brand-accent), #8b5cf6)',
+              width: '32px',
+              height: '32px',
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: 'var(--shadow-sm)',
             }}>
-              <Shield size={20} color="#ffffff" />
+              <Shield size={16} color="var(--text-primary)" />
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -218,8 +218,7 @@ export default function App() {
                 style={{
                   background: activeTab === 'benchmarks' ? 'var(--bg-elevated)' : 'transparent',
                   color: activeTab === 'benchmarks' ? 'var(--text-primary)' : 'var(--text-muted)',
-                  border: activeTab === 'benchmarks' ? '1px solid var(--border-color)' : '1px solid transparent',
-                  boxShadow: activeTab === 'benchmarks' ? 'var(--shadow-sm)' : 'none',
+                  border: '1px solid transparent', // Let the switcher background speak for itself
                 }}
               >
                 <Sparkles size={14} />
@@ -232,8 +231,7 @@ export default function App() {
                 style={{
                   background: activeTab === 'workbench' ? 'var(--bg-elevated)' : 'transparent',
                   color: activeTab === 'workbench' ? 'var(--text-primary)' : 'var(--text-muted)',
-                  border: activeTab === 'workbench' ? '1px solid var(--border-color)' : '1px solid transparent',
-                  boxShadow: activeTab === 'workbench' ? 'var(--shadow-sm)' : 'none',
+                  border: '1px solid transparent',
                 }}
               >
                 <Sliders size={14} />
@@ -259,7 +257,7 @@ export default function App() {
       </header>
 
       {/* Main Body */}
-      <main style={{ maxWidth: '1360px', margin: '0 auto', padding: '24px', width: '100%', flex: 1 }}>
+      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px 24px', width: '100%', flex: 1 }}>
         {/* Error notification banner */}
         {errorMsg && (
           <div style={{
@@ -412,7 +410,7 @@ export default function App() {
         color: 'var(--text-muted)',
       }}>
         <div style={{
-          maxWidth: '1360px',
+          maxWidth: '1100px',
           margin: '0 auto',
           display: 'flex',
           justifyContent: 'space-between',

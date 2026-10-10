@@ -64,7 +64,7 @@ export default function BenchmarkResults() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-            <span style={{
+            {/* <span style={{
               fontSize: '0.74rem',
               padding: '3px 10px',
               borderRadius: '12px',
@@ -74,7 +74,7 @@ export default function BenchmarkResults() {
               fontWeight: '700',
             }}>
               8 Unseen Test Cases • 42 Claims Evaluated
-            </span>
+            </span> */}
             <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
               Small sample; evaluated by our team; not a general accuracy claim.
             </span>

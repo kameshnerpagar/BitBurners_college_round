@@ -257,11 +257,12 @@ export default function CorrectedAnswerView({ correctedAnswer, originalAnswer })
                 width: '32px',
                 height: '32px',
                 borderRadius: 'var(--radius-sm)',
-                background: 'linear-gradient(135deg, var(--brand-accent), #10b981)',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-color)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#fff',
+                color: 'var(--text-primary)',
               }}>
                 <Sparkles size={18} />
               </div>
