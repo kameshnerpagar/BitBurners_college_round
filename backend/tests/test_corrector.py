@@ -79,3 +79,72 @@ def test_corrector_dynamic_generation():
     assert "[Source:" not in correction.revised_text
     assert len(correction.citations) > 0
     assert correction.reaudit_supported_count is not None
+
+
+def test_aspirin_case_sentence_quality():
+    """
+    Test 6: Aspirin case sentence quality.
+    Fails if the revised text contains:
+    - A duplicated sentence (normalized match).
+    - A sentence starting with a lowercase relative clause such as 'which can'.
+    - An unresolved fragment without its subject.
+    """
+    import re
+    from app.demo.cases import get_demo_case
+    from app.demo.fixtures import get_demo_fixture
+
+    case = get_demo_case("medical_faq")
+    fixture = get_demo_fixture("medical_faq")
+    assert case is not None
+    assert fixture is not None
+
+    # Test both benchmark revision and dynamic generation modes
+    for mode in ["benchmark", "dynamic"]:
+        c_id = "medical_faq" if mode == "benchmark" else None
+        correction = generate_corrected_answer(
+            answer_text=case["answer_text"],
+            claims=fixture.claims,
+            source_text=case["source_text"],
+            case_id=c_id,
+        )
+
+        assert correction is not None
+        revised = correction.revised_text
+        assert len(revised) > 50
+
+        # Strip citation chips like [1], [2] for sentence analysis
+        clean_prose = re.sub(r"\[\d+\]", "", revised).strip()
+
+        # Split into candidate sentences
+        pattern = re.compile(r'([^.!?\n]+(?:[.!?]+|\n+|$))', re.MULTILINE)
+        raw_sentences = [m.group(0).strip() for m in pattern.finditer(clean_prose) if len(m.group(0).strip()) > 5]
+
+        assert len(raw_sentences) >= 3, f"Expected at least 3 sentences in revised draft for mode {mode}"
+
+        # 1. FAIL if any sentence starts with a lowercase relative clause such as 'which can'
+        for s in raw_sentences:
+            assert not s.startswith("which can"), f"Sentence starts with 'which can': '{s}'"
+            assert not s.startswith("which "), f"Sentence starts with relative clause 'which ': '{s}'"
+            assert not re.match(r"^\s*which\s+can\b", s, re.IGNORECASE), f"Sentence starts with relative clause 'which can': '{s}'"
+            assert not re.match(r"^\s*(which|that|who|whom)\b", s), f"Sentence starts with lowercase relative pronoun: '{s}'"
+
+        # 2. FAIL if there is any duplicated sentence (normalized match)
+        normalized_sentences = []
+        for s in raw_sentences:
+            norm = " ".join(re.sub(r"[^\w\s]", "", s).lower().split())
+            if norm:
+                normalized_sentences.append(norm)
+
+        assert len(normalized_sentences) == len(set(normalized_sentences)), (
+            f"Found duplicated sentence in mode {mode}: {normalized_sentences}"
+        )
+
+        # 3. Fragment resolution: liver and brain damage must be attached to subject 'Reye's syndrome'
+        if "liver and brain damage" in revised:
+            assert "reye's syndrome" in revised.lower()
+            assert not any(s.lower().startswith("which can cause liver") for s in raw_sentences)
+
+        # 4. Check re-audit honest message format
+        assert correction.reaudit_status_message is not None
+        assert "Re-audited" in correction.reaudit_status_message
+        assert "supported" in correction.reaudit_status_message

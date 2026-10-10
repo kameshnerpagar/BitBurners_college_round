@@ -108,10 +108,43 @@ def test_run_evaluation_execution():
 def test_held_out_evaluation_execution():
     from app.demo.held_out_eval import run_held_out_evaluation
     results = run_held_out_evaluation()
-    assert results["total_cases"] == 3
-    assert results["total_claims_evaluated"] == 19
+    assert results["total_cases"] >= 8
+    assert results["total_claims_evaluated"] >= 35
     assert results["total_planted_errors"] > 0
     assert "precision_contradicted" in results
     assert "precision_unsupported" in results
-    assert len(results["case_results"]) == 3
+    assert "confusion_matrix" in results
+    assert len(results["case_results"]) >= 8
+
+
+def test_three_system_comparison_execution():
+    from app.demo.held_out_eval import run_three_system_benchmark
+    bench = run_three_system_benchmark()
+    assert "systems" in bench
+    assert "llm_only" in bench["systems"]
+    assert "bm25_verifier" in bench["systems"]
+    assert "full_pipeline" in bench["systems"]
+    # Verify fair and naive baselines are both reported
+    assert "llm_fair" in bench["systems"]
+    assert "llm_naive" in bench["systems"]
+    assert "bm25_fair" in bench["systems"]
+    assert "bm25_naive" in bench["systems"]
+
+    # Verify provenance uses team-annotated rather than claiming human annotators
+    assert "team-annotated" in bench["annotation_method"].lower()
+    assert "Small sample; evaluated by our team; not a general accuracy claim." in bench["caption"]
+
+    assert "comparison_table" in bench
+    assert len(bench["comparison_table"]) >= 7
+
+    # Verify design notes are labeled as 'Design note'
+    design_note_rows = [r for r in bench["comparison_table"] if "Design note" in r["advantage"]]
+    assert len(design_note_rows) >= 2
+
+    # Verify dynamic deltas match displayed numbers
+    acc_row = next(r for r in bench["comparison_table"] if "Overall Claim Accuracy (Fair Baselines)" in r["metric"])
+    full_acc = float(acc_row["full_pipeline"].rstrip("%"))
+    bm25_acc = float(acc_row["bm25_verifier"].rstrip("%"))
+    expected_bm25_delta = round(full_acc - bm25_acc, 1)
+    assert f"+{expected_bm25_delta}% over BM25" in acc_row["advantage"]
 

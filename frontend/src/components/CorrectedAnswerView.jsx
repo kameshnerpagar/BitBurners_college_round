@@ -40,6 +40,8 @@ export default function CorrectedAnswerView({ correctedAnswer, originalAnswer })
     human_review_count = 0,
     reaudit_supported_count,
     reaudit_total_claims,
+    reaudit_issues_remaining,
+    reaudit_status_message,
     citations = [],
     changes = [],
   } = correctedAnswer;
@@ -61,6 +63,7 @@ export default function CorrectedAnswerView({ correctedAnswer, originalAnswer })
     if (act.includes('RETAIN') || act.includes('KEPT')) {
       return {
         label: 'Kept',
+        actionKey: 'kept',
         color: 'var(--color-supported)',
         bg: 'var(--color-supported-bg)',
         border: 'var(--color-supported-border)',
@@ -70,6 +73,7 @@ export default function CorrectedAnswerView({ correctedAnswer, originalAnswer })
     if (act.includes('CORRECT')) {
       return {
         label: 'Corrected',
+        actionKey: 'corrected',
         color: 'var(--color-contradicted)',
         bg: 'var(--color-contradicted-bg)',
         border: 'var(--color-contradicted-border)',
@@ -79,6 +83,7 @@ export default function CorrectedAnswerView({ correctedAnswer, originalAnswer })
     if (act.includes('QUALIF')) {
       return {
         label: 'Qualified',
+        actionKey: 'qualified',
         color: 'var(--color-unsupported)',
         bg: 'var(--color-unsupported-bg)',
         border: 'var(--color-unsupported-border)',
@@ -88,6 +93,7 @@ export default function CorrectedAnswerView({ correctedAnswer, originalAnswer })
     if (act.includes('REMOV')) {
       return {
         label: 'Removed',
+        actionKey: 'removed',
         color: 'var(--text-muted)',
         bg: 'var(--bg-secondary)',
         border: 'var(--border-color)',
@@ -96,6 +102,7 @@ export default function CorrectedAnswerView({ correctedAnswer, originalAnswer })
     }
     return {
       label: 'Review',
+      actionKey: 'qualified',
       color: 'var(--color-ambiguous)',
       bg: 'var(--color-ambiguous-bg)',
       border: 'var(--color-ambiguous-border)',
@@ -103,13 +110,45 @@ export default function CorrectedAnswerView({ correctedAnswer, originalAnswer })
     };
   };
 
+  // Derive counts directly from changes array for 100% vocabulary & data consistency with the log
+  const keptCount = changes.length > 0
+    ? changes.filter(c => {
+        const act = (c.action || '').toUpperCase();
+        return act.includes('RETAIN') || act.includes('KEPT');
+      }).length
+    : retained_count;
+
+  const correctedCount = changes.length > 0
+    ? changes.filter(c => {
+        const act = (c.action || '').toUpperCase();
+        return act.includes('CORRECT');
+      }).length
+    : corrected_count;
+
+  const qualifiedCount = changes.length > 0
+    ? changes.filter(c => {
+        const act = (c.action || '').toUpperCase();
+        return act.includes('QUALIF') || act.includes('AMBIGUOUS') || act.includes('FLAGGED') || act.includes('REVIEW');
+      }).length
+    : qualified_count;
+
+  const removedCount = changes.length > 0
+    ? changes.filter(c => {
+        const act = (c.action || '').toUpperCase();
+        return act.includes('REMOV');
+      }).length
+    : (removed_count || 0);
+
   // Re-audit statistics
   const reauditSupported = reaudit_supported_count !== undefined && reaudit_supported_count !== null
     ? reaudit_supported_count
-    : (retained_count + corrected_count);
+    : (keptCount + correctedCount);
   const reauditTotal = reaudit_total_claims !== undefined && reaudit_total_claims !== null
     ? reaudit_total_claims
-    : Math.max(1, retained_count + corrected_count + qualified_count + removed_count);
+    : Math.max(1, keptCount + correctedCount + qualifiedCount + removedCount);
+  const issuesRemaining = reaudit_issues_remaining !== undefined && reaudit_issues_remaining !== null
+    ? reaudit_issues_remaining
+    : Math.max(0, reauditTotal - reauditSupported);
 
   // Render revised text with interactive citation chips
   const renderInteractiveProse = (text) => {
@@ -241,16 +280,16 @@ export default function CorrectedAnswerView({ correctedAnswer, originalAnswer })
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              background: 'var(--color-supported-bg)',
-              border: '1px solid var(--color-supported-border)',
-              color: 'var(--color-supported)',
-              padding: '6px 12px',
+              background: issuesRemaining === 0 ? 'var(--color-supported-bg)' : 'var(--color-unsupported-bg)',
+              border: `1px solid ${issuesRemaining === 0 ? 'var(--color-supported-border)' : 'var(--color-unsupported-border)'}`,
+              color: issuesRemaining === 0 ? 'var(--color-supported)' : 'var(--color-unsupported)',
+              padding: '6px 14px',
               borderRadius: '20px',
-              fontSize: '0.8rem',
+              fontSize: '0.82rem',
               fontWeight: '700',
             }}>
-              <ShieldCheck size={15} />
-              <span>Revised answer re-audited: {reauditSupported} of {reauditTotal} claims supported</span>
+              {issuesRemaining === 0 ? <ShieldCheck size={15} /> : <AlertTriangle size={15} />}
+              <span>{reaudit_status_message || `${reauditSupported} of ${reauditTotal} claims now supported; ${issuesRemaining} ${issuesRemaining === 1 ? 'issue remains' : 'issues remain'}`}</span>
             </div>
 
             {/* View Mode Toggle: Per-Claim Split vs Revised Only */}
@@ -303,7 +342,7 @@ export default function CorrectedAnswerView({ correctedAnswer, originalAnswer })
           </div>
         </div>
 
-        {/* Change Stats Summary */}
+        {/* Change Stats Summary (Vocabulary strictly matched to Modification Log: Kept, Corrected, Qualified, Removed) */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
@@ -317,11 +356,11 @@ export default function CorrectedAnswerView({ correctedAnswer, originalAnswer })
             border: '1px solid var(--color-supported-border)',
             borderRadius: 'var(--radius-sm)',
           }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-supported)', fontWeight: '600' }}>
-              Kept Facts
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-supported)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Kept
             </div>
             <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--color-supported)', marginTop: '2px' }}>
-              {retained_count}
+              {keptCount}
             </div>
           </div>
 
@@ -331,61 +370,41 @@ export default function CorrectedAnswerView({ correctedAnswer, originalAnswer })
             border: '1px solid var(--color-contradicted-border)',
             borderRadius: 'var(--radius-sm)',
           }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-contradicted)', fontWeight: '600' }}>
-              Corrected Claims
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-contradicted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Corrected
             </div>
             <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--color-contradicted)', marginTop: '2px' }}>
-              {corrected_count}
+              {correctedCount}
             </div>
           </div>
 
-          {qualified_count > 0 && (
-            <div style={{
-              padding: '10px 14px',
-              background: 'var(--color-unsupported-bg)',
-              border: '1px solid var(--color-unsupported-border)',
-              borderRadius: 'var(--radius-sm)',
-            }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-unsupported)', fontWeight: '600' }}>
-                Qualified Claims
-              </div>
-              <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--color-unsupported)', marginTop: '2px' }}>
-                {qualified_count}
-              </div>
+          <div style={{
+            padding: '10px 14px',
+            background: 'var(--color-unsupported-bg)',
+            border: '1px solid var(--color-unsupported-border)',
+            borderRadius: 'var(--radius-sm)',
+          }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-unsupported)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Qualified
             </div>
-          )}
+            <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--color-unsupported)', marginTop: '2px' }}>
+              {qualifiedCount}
+            </div>
+          </div>
 
-          {removed_count > 0 && (
-            <div style={{
-              padding: '10px 14px',
-              background: 'var(--bg-secondary)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-sm)',
-            }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-                Removed Claims
-              </div>
-              <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                {removed_count}
-              </div>
+          <div style={{
+            padding: '10px 14px',
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 'var(--radius-sm)',
+          }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Removed
             </div>
-          )}
-
-          {human_review_count > 0 && (
-            <div style={{
-              padding: '10px 14px',
-              background: 'var(--color-ambiguous-bg)',
-              border: '1px solid var(--color-ambiguous-border)',
-              borderRadius: 'var(--radius-sm)',
-            }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-ambiguous)', fontWeight: '600' }}>
-                Review Required
-              </div>
-              <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--color-ambiguous)', marginTop: '2px' }}>
-                {human_review_count}
-              </div>
+            <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              {removedCount}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -633,8 +652,8 @@ export default function CorrectedAnswerView({ correctedAnswer, originalAnswer })
             {changes.map((c, i) => {
               const badge = getActionBadge(c.action);
               const isExpanded = expandedRow === i;
-              const origText = c.original_text || c.original_claim || c.claim || '';
-              const revText = c.revised_text || c.revised_claim || '';
+              const origText = (c.original_text || c.original_claim || c.claim || c.claim_text || c.text || `Claim statement #${c.claim_id ?? i + 1}`).trim();
+              const revText = (c.revised_text || c.revised_claim || (c.action === 'REMOVED' ? 'Omitted from revised prose' : (c.action === 'RETAINED' ? origText : 'Assertion qualified against source context'))).trim();
               const citation = c.citation || c.source_citation || null;
 
               return (
@@ -658,7 +677,7 @@ export default function CorrectedAnswerView({ correctedAnswer, originalAnswer })
                       gap: '12px',
                     }}
                   >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                         <span
                           style={{
@@ -691,29 +710,38 @@ export default function CorrectedAnswerView({ correctedAnswer, originalAnswer })
                           Claim #{c.claim_id ?? i + 1}
                         </span>
 
-                        <span style={{ fontSize: '0.88rem', fontWeight: '600', color: 'var(--text-primary)' }}>
+                        <span style={{ fontSize: '0.88rem', fontWeight: '600', color: 'var(--text-primary)', lineHeight: '1.4' }}>
                           "{origText}"
                         </span>
                       </div>
 
-                      {/* Revised wording preview row */}
-                      {revText && (
-                        <div style={{
-                          fontSize: '0.82rem',
-                          color: 'var(--text-secondary)',
-                          marginLeft: '2px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
+                      {/* Revised wording row (always populated and visible) */}
+                      <div style={{
+                        fontSize: '0.82rem',
+                        color: 'var(--text-secondary)',
+                        marginLeft: '2px',
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        gap: '8px',
+                        flexWrap: 'wrap',
+                      }}>
+                        <span style={{
+                          color: 'var(--text-muted)',
+                          fontSize: '0.7rem',
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                          background: 'var(--bg-elevated)',
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          border: '1px solid var(--border-color)',
                         }}>
-                          <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase' }}>
-                            Revised:
-                          </span>
-                          <span style={{ color: badge.color, fontWeight: '500' }}>
-                            {revText}
-                          </span>
-                        </div>
-                      )}
+                          New Wording ({badge.label}):
+                        </span>
+                        <span style={{ color: badge.color, fontWeight: '500' }}>
+                          {revText}
+                        </span>
+                      </div>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

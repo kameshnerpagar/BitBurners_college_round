@@ -137,6 +137,12 @@ export async function fetchHeldOutEvaluation() {
   return res.json();
 }
 
+export async function fetchComparisonEvaluation() {
+  const res = await fetch(`${API_BASE}/audit/eval/comparison`);
+  if (!res.ok) throw new Error('Failed to fetch 3-way system comparison');
+  return res.json();
+}
+
 export async function fetchDemo(caseId) {
   const res = await fetch(`${API_BASE}/demo/${caseId}`);
   if (!res.ok) throw new Error(`Failed to fetch demo case: ${caseId}`);

@@ -45,6 +45,8 @@ class ClaimSpan(BaseModel):
     span_start: int = Field(..., description="Char offset start in answer text")
     span_end: int = Field(..., description="Char offset end in answer text")
     claim_type: ClaimType = Field("factual", description="Type of claim (factual, compound, vague, non_verifiable)")
+    parent_sentence_id: Optional[int] = Field(None, description="Index of parent sentence in answer text")
+    parent_sentence_text: Optional[str] = Field(None, description="Complete text of parent sentence")
 
 
 # ── Verdict & Evidence ────────────────────────────────────────────────────────
@@ -101,6 +103,8 @@ class ClaimVerdict(BaseModel):
     )
     needs_human_review: bool = False
     human_review_reason: Optional[str] = None
+    parent_sentence_id: Optional[int] = Field(None, description="Index of parent sentence in answer text")
+    parent_sentence_text: Optional[str] = Field(None, description="Complete text of parent sentence")
 
 
 # ── Reasoning & Safety ────────────────────────────────────────────────────────
@@ -139,6 +143,8 @@ class ClaimCorrection(BaseModel):
     reason: str
     citation: Optional[str] = None
     needs_human_review: bool = False
+    parent_sentence_id: Optional[int] = Field(None, description="Index of parent sentence in original answer text")
+    parent_sentence_text: Optional[str] = Field(None, description="Complete original parent sentence")
 
 
 class AnswerCorrection(BaseModel):
@@ -151,6 +157,8 @@ class AnswerCorrection(BaseModel):
     human_review_count: int = 0
     reaudit_supported_count: Optional[int] = None
     reaudit_total_claims: Optional[int] = None
+    reaudit_issues_remaining: Optional[int] = None
+    reaudit_status_message: Optional[str] = None
     citations: Optional[List[Dict[str, Any]]] = None
 
 
