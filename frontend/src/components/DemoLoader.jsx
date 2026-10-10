@@ -97,7 +97,7 @@ export default function DemoLoader({
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem' }}>
                 <span style={{ color: 'var(--brand-cyan)', fontWeight: '500' }}>
-                  {isActive ? '● Currently Loaded' : 'Click to Load & Audit'}
+                  {isActive ? 'Currently Loaded' : 'Click to Load & Audit'}
                 </span>
                 <span style={{ color: 'var(--text-muted)' }}>
                   {countLabel}

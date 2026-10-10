@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UploadCloud, Play, FileText, Check, AlertCircle, Camera } from 'lucide-react';
+import { UploadCloud, Play, FileText, Check, AlertCircle, Camera, RefreshCw } from 'lucide-react';
 
 export default function InputForm({
   initialAnswer = '',
@@ -141,7 +141,7 @@ export default function InputForm({
           <textarea
             value={answerText}
             onChange={(e) => setAnswerText(e.target.value)}
-            placeholder="Paste the AI's response here (e.g. from ChatGPT, Claude, Gemini)..."
+            placeholder=""
             rows={10}
             style={{
               width: '100%',
@@ -177,7 +177,7 @@ export default function InputForm({
               setSourceFile(null);
             }}
             disabled={!!sourceFile}
-            placeholder="Paste your verified reference text, article, policy, or clinical study..."
+            placeholder=""
             rows={7}
             style={{
               width: '100%',
@@ -258,7 +258,7 @@ export default function InputForm({
         >
           {isAuditing ? (
             <>
-              <span className="spinning" style={{ display: 'inline-block' }}>⟳</span>
+              <RefreshCw size={16} className="spinning" style={{ display: 'inline-block' }} />
               <span>Running Audit Pipeline...</span>
             </>
           ) : (
