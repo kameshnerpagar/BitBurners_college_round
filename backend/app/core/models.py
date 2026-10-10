@@ -151,6 +151,8 @@ class AnswerCorrection(BaseModel):
     human_review_count: int = 0
     reaudit_supported_count: Optional[int] = None
     reaudit_total_claims: Optional[int] = None
+    reaudit_issues_remaining: Optional[int] = None
+    reaudit_status_message: Optional[str] = None
     citations: Optional[List[Dict[str, Any]]] = None
 
 

@@ -108,10 +108,23 @@ def test_run_evaluation_execution():
 def test_held_out_evaluation_execution():
     from app.demo.held_out_eval import run_held_out_evaluation
     results = run_held_out_evaluation()
-    assert results["total_cases"] == 3
-    assert results["total_claims_evaluated"] == 19
+    assert results["total_cases"] >= 8
+    assert results["total_claims_evaluated"] >= 35
     assert results["total_planted_errors"] > 0
     assert "precision_contradicted" in results
     assert "precision_unsupported" in results
-    assert len(results["case_results"]) == 3
+    assert "confusion_matrix" in results
+    assert len(results["case_results"]) >= 8
+
+
+def test_three_system_comparison_execution():
+    from app.demo.held_out_eval import run_three_system_benchmark
+    bench = run_three_system_benchmark()
+    assert "systems" in bench
+    assert "llm_only" in bench["systems"]
+    assert "bm25_verifier" in bench["systems"]
+    assert "full_pipeline" in bench["systems"]
+    assert "comparison_table" in bench
+    assert len(bench["comparison_table"]) >= 7
+    assert "Small sample; evaluated by our team; not a general accuracy claim." in bench["caption"]
 

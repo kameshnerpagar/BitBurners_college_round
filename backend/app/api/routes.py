@@ -307,6 +307,13 @@ async def get_evaluation():
 
 @router.get("/audit/eval/held-out")
 async def get_held_out_evaluation():
-    """Run held-out test evaluation against 3 unseen cases."""
+    """Run held-out test evaluation against 8 unseen benchmark cases."""
     from app.demo.held_out_eval import run_held_out_evaluation
     return run_held_out_evaluation()
+
+
+@router.get("/audit/eval/comparison")
+async def get_system_comparison():
+    """Run 3-way benchmark comparison across LLM-Only, BM25, and Full Pipeline."""
+    from app.demo.held_out_eval import run_three_system_benchmark
+    return run_three_system_benchmark()

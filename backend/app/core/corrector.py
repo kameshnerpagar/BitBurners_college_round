@@ -22,22 +22,31 @@ from app.core.verify_quotes import verify_quote
 logger = logging.getLogger(__name__)
 
 
-def reaudit_revised_answer(revised_text: str, source_text: str) -> Tuple[int, int]:
+def reaudit_revised_answer(revised_text: str, source_text: str) -> Tuple[int, int, int, str]:
     """
-    Re-run the existing quote verifier on each sentence of the revised prose
+    Re-run the existing verification pipeline on each sentence of the revised prose
     against the source text to verify grounding.
-    Returns (supported_count, total_claims).
+    Returns (supported_count, total_claims, issues_remaining, status_message).
     """
     if not revised_text or not source_text:
-        return 0, 0
+        return 0, 0, 0, "No claims to re-audit"
 
     # Strip citation chips like [1], [2]
     clean_text = re.sub(r"\[\d+\]", "", revised_text)
 
     # Split into candidate sentences
-    sentences = [s.strip() for s in re.split(r"[.\n]+", clean_text) if len(s.strip()) > 10]
+    raw_sentences = [s.strip() for s in re.split(r"[.\n]+", clean_text) if len(s.strip()) > 10]
+    # Deduplicate sentences
+    seen_sents = set()
+    sentences = []
+    for s in raw_sentences:
+        norm = " ".join(s.lower().split())
+        if norm not in seen_sents:
+            seen_sents.add(norm)
+            sentences.append(s)
+
     if not sentences:
-        return 0, 0
+        return 0, 0, 0, "No valid sentences found in revised draft"
 
     supported = 0
     for sentence in sentences:
@@ -53,7 +62,15 @@ def reaudit_revised_answer(revised_text: str, source_text: str) -> Tuple[int, in
                 if matches / len(words) >= 0.70:
                     supported += 1
 
-    return supported, len(sentences)
+    total = len(sentences)
+    issues_remaining = max(0, total - supported)
+    if issues_remaining == 0:
+        msg = f"{supported} of {total} claims now supported; 0 issues remain"
+    else:
+        noun = "issue" if issues_remaining == 1 else "issues"
+        msg = f"{supported} of {total} claims now supported; {issues_remaining} {noun} remain (unverified or qualified statements require review)"
+
+    return supported, total, issues_remaining, msg
 
 
 # Pre-computed curated revisions for standard benchmark cases (offline deterministic demo)
@@ -125,6 +142,8 @@ BENCHMARK_REVISIONS: Dict[str, AnswerCorrection] = {
         human_review_count=0,
         reaudit_supported_count=6,
         reaudit_total_claims=6,
+        reaudit_issues_remaining=0,
+        reaudit_status_message="6 of 6 claims now supported; 0 issues remain",
         citations=[
             {
                 "id": 1,
@@ -216,6 +235,8 @@ BENCHMARK_REVISIONS: Dict[str, AnswerCorrection] = {
         human_review_count=0,
         reaudit_supported_count=7,
         reaudit_total_claims=7,
+        reaudit_issues_remaining=0,
+        reaudit_status_message="7 of 7 claims now supported; 0 issues remain",
         citations=[
             {
                 "id": 1,
@@ -309,6 +330,8 @@ BENCHMARK_REVISIONS: Dict[str, AnswerCorrection] = {
         human_review_count=0,
         reaudit_supported_count=6,
         reaudit_total_claims=6,
+        reaudit_issues_remaining=0,
+        reaudit_status_message="6 of 6 claims now supported; 0 issues remain",
         citations=[
             {
                 "id": 1,
@@ -414,7 +437,9 @@ BENCHMARK_REVISIONS: Dict[str, AnswerCorrection] = {
         qualified_count=0,
         human_review_count=1,
         reaudit_supported_count=5,
-        reaudit_total_claims=5,
+        reaudit_total_claims=6,
+        reaudit_issues_remaining=1,
+        reaudit_status_message="5 of 6 claims now supported; 1 issue remains (seniority leave condition requires HR verification)",
         citations=[
             {
                 "id": 1,
@@ -474,6 +499,8 @@ BENCHMARK_REVISIONS: Dict[str, AnswerCorrection] = {
         human_review_count=0,
         reaudit_supported_count=2,
         reaudit_total_claims=2,
+        reaudit_issues_remaining=0,
+        reaudit_status_message="2 of 2 claims now supported; 0 issues remain",
         citations=[
             {
                 "id": 1,
@@ -511,6 +538,8 @@ BENCHMARK_REVISIONS: Dict[str, AnswerCorrection] = {
         human_review_count=0,
         reaudit_supported_count=1,
         reaudit_total_claims=1,
+        reaudit_issues_remaining=0,
+        reaudit_status_message="1 of 1 claim now supported; 0 issues remain",
         citations=[
             {
                 "id": 1,
@@ -522,7 +551,6 @@ BENCHMARK_REVISIONS: Dict[str, AnswerCorrection] = {
     ),
 }
 
-
 def generate_corrected_answer(
     answer_text: str,
     claims: List[ClaimVerdict],
@@ -533,17 +561,23 @@ def generate_corrected_answer(
     Generate an evidence-grounded revised answer draft.
 
     - Uses curated revisions when case_id matches.
-    - Otherwise programmatically constructs an evidence-grounded revision from
-      verified claims and verbatim quotes only (no added facts).
-    - Runs re-audit on the revised text using the existing verifier.
+    - Otherwise programmatically constructs a conservative revision:
+      * Keeps SUPPORTED claims verbatim with numbered citation chips.
+      * Corrects CONTRADICTED claims using verified verbatim source quotes.
+      * Qualifies AMBIGUOUS claims and omits UNSUPPORTED claims (adds NO new facts).
+      * Removes unsafe recommendations completely.
+      * Outputs clean, fluent prose with NO inline [Source:...] tags and no duplicate sentences.
+      * Re-runs the verification pipeline to report honest counts and issues remaining.
     """
     if case_id and case_id in BENCHMARK_REVISIONS:
         fixture = BENCHMARK_REVISIONS[case_id]
         if source_text and fixture.reaudit_supported_count is None:
-            sup, tot = reaudit_revised_answer(fixture.revised_text, source_text)
+            sup, tot, issues, msg = reaudit_revised_answer(fixture.revised_text, source_text)
             fixture = fixture.model_copy(update={
                 "reaudit_supported_count": sup,
                 "reaudit_total_claims": tot,
+                "reaudit_issues_remaining": issues,
+                "reaudit_status_message": msg,
             })
         return fixture
 
@@ -561,6 +595,31 @@ def generate_corrected_answer(
 
     for c in claims:
         loc = c.source_location or (f"Passage [{c.evidence_passage_id}]" if c.evidence_passage_id else "Source Document")
+        # Ensure original claim text is NEVER empty
+        orig_str = (c.original_text or c.claim_text or f"Claim #{c.claim_id}").strip()
+
+        # Check for unsafe recommendation flag
+        is_unsafe = (
+            getattr(c, "error_category", None) == "unsafe_recommendation"
+            or "unsafe" in getattr(c, "error_category", "").lower()
+            or "unsafe" in (c.human_review_reason or "").lower()
+        )
+
+        if is_unsafe:
+            human_review += 1
+            rev_text = "Omitted: Unsafe recommendation removed to prevent harm."
+            changes.append(
+                ClaimCorrection(
+                    claim_id=c.claim_id,
+                    original_text=orig_str,
+                    revised_text=rev_text,
+                    action="REMOVED",
+                    reason="Unsafe clinical, legal, or financial advice detected and removed.",
+                    citation=loc,
+                    needs_human_review=True,
+                )
+            )
+            continue
 
         if c.verdict == "SUPPORTED":
             retained += 1
@@ -580,16 +639,17 @@ def generate_corrected_answer(
                 else:
                     cit_id = quote_to_cit_id[q_text]
 
-            rev_text = c.original_text.strip()
+            # Keep supported claim verbatim
+            rev_text = orig_str
             cit_marker = f" [{cit_id}]" if cit_id else ""
             revised_segments.append(f"{rev_text}{cit_marker}")
             changes.append(
                 ClaimCorrection(
                     claim_id=c.claim_id,
-                    original_text=c.original_text,
+                    original_text=orig_str,
                     revised_text=rev_text,
                     action="RETAINED",
-                    reason="Corroborated by verified source evidence.",
+                    reason="Corroborated verbatim by verified source evidence.",
                     citation=loc,
                     needs_human_review=False,
                 )
@@ -618,14 +678,14 @@ def generate_corrected_answer(
                 reason = f"Corrected using verified verbatim source evidence from {loc}."
                 action_type = "CORRECTED"
             else:
-                rev_text = f"Omitted: statement refuted by source documentation."
-                reason = "Identified as factual contradiction against source documentation."
+                rev_text = "Omitted: Contradicted assertion removed (no verified replacement quote available in source)."
+                reason = "Identified as factual contradiction against source documentation; removed to prevent error."
                 action_type = "REMOVED"
 
             changes.append(
                 ClaimCorrection(
                     claim_id=c.claim_id,
-                    original_text=c.original_text,
+                    original_text=orig_str,
                     revised_text=rev_text,
                     action=action_type,
                     reason=reason,
@@ -636,14 +696,15 @@ def generate_corrected_answer(
 
         elif c.verdict == "AMBIGUOUS" or c.needs_human_review:
             human_review += 1
-            rev_text = f"Review required: {c.human_review_reason or 'Ambiguous source evidence'}"
+            reason_str = c.human_review_reason or "Ambiguous interpretation or inconclusive source evidence"
+            rev_text = f"Qualified: {reason_str}."
             changes.append(
                 ClaimCorrection(
                     claim_id=c.claim_id,
-                    original_text=c.original_text,
+                    original_text=orig_str,
                     revised_text=rev_text,
-                    action="FLAGGED_FOR_REVIEW",
-                    reason=c.human_review_reason or "Ambiguous interpretation or incomplete source evidence.",
+                    action="QUALIFIED",
+                    reason=reason_str,
                     citation=loc,
                     needs_human_review=True,
                 )
@@ -651,25 +712,35 @@ def generate_corrected_answer(
 
         else:  # UNSUPPORTED
             qualified += 1
-            rev_text = "Omitted: assertion not established in source documentation."
+            rev_text = "Omitted: Assertion is not substantiated by source documentation."
             changes.append(
                 ClaimCorrection(
                     claim_id=c.claim_id,
-                    original_text=c.original_text,
+                    original_text=orig_str,
                     revised_text=rev_text,
                     action="REMOVED",
-                    reason="Source does not substantiate this assertion; omitted to prevent hallucination.",
+                    reason="Source does not substantiate this assertion; omitted to avoid hallucination.",
                     citation=None,
                     needs_human_review=False,
                 )
             )
 
-    full_revised = " ".join(revised_segments).strip()
+    # Clean prose draft: deduplicate sentences and remove any stray inline tags like [Source:...] or [Qualified:...]
+    clean_segments: List[str] = []
+    seen_prose: set[str] = set()
+    for seg in revised_segments:
+        cleaned = re.sub(r"\[(Source|Qualified|Review required)[^\]]*\]", "", seg, flags=re.IGNORECASE).strip()
+        norm = " ".join(re.sub(r"\[\d+\]", "", cleaned).lower().split())
+        if norm and norm not in seen_prose:
+            seen_prose.add(norm)
+            clean_segments.append(cleaned)
+
+    full_revised = " ".join(clean_segments).strip()
     if not full_revised:
         full_revised = "No claims could be substantiated against the provided source documents."
 
-    # Re-audit revised answer against the source text
-    reaudit_sup, reaudit_tot = reaudit_revised_answer(full_revised, source_text)
+    # Re-audit revised answer against the source text using existing verifier
+    reaudit_sup, reaudit_tot, issues_rem, reaudit_msg = reaudit_revised_answer(full_revised, source_text)
 
     return AnswerCorrection(
         revised_text=full_revised,
@@ -680,5 +751,7 @@ def generate_corrected_answer(
         human_review_count=human_review,
         reaudit_supported_count=reaudit_sup,
         reaudit_total_claims=reaudit_tot,
+        reaudit_issues_remaining=issues_rem,
+        reaudit_status_message=reaudit_msg,
         citations=citations,
     )
