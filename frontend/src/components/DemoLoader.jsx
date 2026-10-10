@@ -17,12 +17,12 @@ export default function DemoLoader({
   };
 
   const demoSubtitles = {
-    medical_faq: 'Pediatric aspirin advice with contradicted dosage and unsafe recommendation',
-    climate_stats: 'Global energy statistics with contradicted percentages and bad inferences',
-    tenant_rights: 'California lease summary with fabricated precedents and unsafe legal advice',
-    leave_policy: 'Corporate PTO and sick leave policy with contradicted days, ambiguous rules, and fabricated clauses',
-    fully_correct: 'Historical facts about Paris and the Eiffel Tower verifying control performance without hallucinations',
-    prompt_injection: 'Adversarial system prompt injection attempt trying to force false SUPPORTED verdicts',
+    medical_faq: 'Tests whether the system catches incorrect dosage information and potentially unsafe medical advice.',
+    climate_stats: 'Tests the system\'s ability to find incorrect percentages and conclusions that don\'t match the source.',
+    tenant_rights: 'Tests whether the system catches made-up legal references, incorrect claims, and potentially unsafe legal advice.',
+    leave_policy: 'Tests how the system handles conflicting leave rules, unclear policies, and clauses that don\'t match the source.',
+    fully_correct: 'A control test with correct historical facts to check whether the system avoids flagging claims that are supported by the source.',
+    prompt_injection: 'Checks whether the system can ignore malicious instructions hidden in the input and continue checking claims against the source.',
   };
 
   // Fallback ground-truth counts if not already present on demo object
@@ -40,7 +40,7 @@ export default function DemoLoader({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
         <div>
           <h3 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-primary)' }}>
-            Preset Benchmark Cases (With Planted Ground-Truth Errors)
+            Preset Test Cases (With Known Errors)
           </h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
             Select any test case below to inspect how the pipeline catches hallucinations, logical flaws, and safety risks.

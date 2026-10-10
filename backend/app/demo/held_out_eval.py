@@ -604,10 +604,10 @@ def run_three_system_benchmark() -> Dict[str, Any]:
         "case_summaries": case_summaries,
         "wins_and_losses": {
             "where_full_pipeline_wins": [
-                "Prompt Injection Resistance: Delimiter isolation strictly bounds user text, preventing jailbreak instructions from overriding audit logic.",
-                "Verbatim Quote Traceability: 3-tier programmatic quote verification catches hallucinated citations that both LLM-only and BM25 systems accept.",
-                "Contractual Ambiguity: Handles multi-passage conflicts (e.g. lease amendments overriding baseline clauses) instead of forcing binary True/False.",
-                "Safety Guardrails: Explicit medical/legal safety classification catches harmful recommendations even when syntactically fluent.",
+                "Protection Against Prompt Injection: Keeps user-provided text separate from system instructions to reduce the risk of malicious prompts affecting the audit.",
+                "Reliable Source Quotes: Checks extracted quotes against the original document in three steps to catch incorrect or made-up citations.",
+                "Handling Conflicting Information: Can consider multiple passages that disagree, such as an updated lease clause that replaces an older one, instead of forcing every claim into a simple True or False verdict.",
+                "Safety Checks: Identifies potentially harmful medical or legal advice, even when the response sounds convincing.",
             ],
             "where_full_pipeline_does_not_win": [
                 "Inference Latency: The multi-stage pipeline involves multiple sequential checks (extraction, retrieval, judging, reasoning, safety), making it 3-4x slower than single-prompt LLM-only.",

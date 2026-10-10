@@ -167,7 +167,7 @@ export default function SourceViewer({
               color: 'var(--brand-accent)',
               fontFamily: 'var(--font-mono)',
             }}>
-              📍 {selectedClaim.source_location}
+              {selectedClaim.source_location}
             </span>
           )}
         </div>

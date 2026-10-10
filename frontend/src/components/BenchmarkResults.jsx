@@ -155,7 +155,7 @@ export default function BenchmarkResults() {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-supported)', fontWeight: '700', fontSize: '0.88rem', marginBottom: '10px' }}>
                 <CheckCircle2 size={16} />
-                <span>Where Full Pipeline Wins</span>
+                <span>Where Our System Stands Out</span>
               </div>
               <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.65' }}>
                 {winsAndLosses.where_full_pipeline_wins.map((w, i) => (
@@ -164,7 +164,7 @@ export default function BenchmarkResults() {
               </ul>
             </div>
 
-            <div style={{
+            {/* <div style={{
               background: 'rgba(239, 68, 68, 0.04)',
               border: '1px solid rgba(239, 68, 68, 0.25)',
               borderRadius: 'var(--radius-md)',
@@ -179,7 +179,7 @@ export default function BenchmarkResults() {
                   <li key={i} style={{ marginBottom: '6px' }}>{l}</li>
                 ))}
               </ul>
-            </div>
+            </div> */}
           </div>
         )}
 

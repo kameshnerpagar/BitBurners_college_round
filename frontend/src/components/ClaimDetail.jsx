@@ -244,7 +244,7 @@ export default function ClaimDetail({ claim, onNext, onPrev, index, total }) {
             </div>
             {claim.source_location && (
               <span style={{ fontSize: '0.72rem', color: 'var(--brand-accent)', fontWeight: '600', fontFamily: 'var(--font-mono)' }}>
-                📍 {claim.source_location}
+                {claim.source_location}
               </span>
             )}
           </div>
