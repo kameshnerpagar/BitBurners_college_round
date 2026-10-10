@@ -77,6 +77,15 @@ async def extract_claims(answer_text: str) -> List[ClaimSpan]:
         raw_claims = [raw_claims]
 
     claims: List[ClaimSpan] = []
+    import re
+    # Extract parent sentences from answer_text with character spans
+    sent_pattern = re.compile(r'([^.!?\n]+(?:[.!?]+|\n+|$))', re.MULTILINE)
+    parent_sentences = []
+    for s_idx, match in enumerate(sent_pattern.finditer(answer_text)):
+        s_text = match.group(0).strip()
+        if s_text:
+            parent_sentences.append((s_idx, s_text, match.start(), match.end()))
+
     for i, item in enumerate(raw_claims):
         if isinstance(item, dict):
             original = item.get("original_text", "")
@@ -95,6 +104,22 @@ async def extract_claims(answer_text: str) -> List[ClaimSpan]:
             if claim_type not in ("factual", "compound", "vague", "non_verifiable"):
                 claim_type = "factual"
 
+            # Determine parent sentence id and text
+            parent_id = None
+            parent_text = None
+            for s_idx, s_str, s_start, s_end in parent_sentences:
+                if (s_start <= actual_start < s_end) or (actual_start >= s_start and actual_end <= s_end):
+                    parent_id = s_idx
+                    parent_text = s_str
+                    break
+            if parent_id is None and parent_sentences:
+                # Fallback: check if verified_original is inside s_str
+                for s_idx, s_str, _, _ in parent_sentences:
+                    if verified_original.lower() in s_str.lower():
+                        parent_id = s_idx
+                        parent_text = s_str
+                        break
+
             claims.append(
                 ClaimSpan(
                     claim_id=i,
@@ -103,6 +128,8 @@ async def extract_claims(answer_text: str) -> List[ClaimSpan]:
                     span_start=actual_start,
                     span_end=actual_end,
                     claim_type=claim_type,
+                    parent_sentence_id=parent_id,
+                    parent_sentence_text=parent_text,
                 )
             )
 

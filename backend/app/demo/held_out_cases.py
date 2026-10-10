@@ -4,9 +4,9 @@ Second Opinion — Held-Out Benchmark Test Suite.
 Contains 8 held-out benchmark cases that were NEVER used when writing, tuning,
 or debugging prompt templates, few-shot examples, or heuristic thresholds.
 
-Dataset Size: 8 test cases, 43 atomic claims.
-Label Assignment: Ground-truth verdicts independently assigned by human
-annotators via verbatim cross-examination against the ground-truth source text.
+Dataset Size: 8 test cases, 42 atomic claims.
+Label Assignment: Ground-truth verdicts team-annotated via verbatim cross-examination
+against the ground-truth source text without seeing model outputs.
 
 Covers the 8 core evaluation criteria:
 1. Paraphrased facts (syntactic variation; tests false-contradiction resistance)

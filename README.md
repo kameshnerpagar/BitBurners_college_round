@@ -75,22 +75,23 @@ To empirically evaluate Second Opinion against simpler alternatives, we construc
 
 ### Benchmark Setup & Labeling Methodology
 - **Held-Out Separation:** These 8 cases were isolated in `held_out_cases.py` and were **never** used during prompt engineering, few-shot tuning, or threshold calibration.
-- **Label Assignment:** Ground-truth verdicts (`SUPPORTED`, `CONTRADICTED`, `UNSUPPORTED`, `AMBIGUOUS`) were independently assigned by our team via verbatim cross-examination against ground-truth source text without seeing model outputs.
+- **Label Assignment:** Ground-truth verdicts (`SUPPORTED`, `CONTRADICTED`, `UNSUPPORTED`, `AMBIGUOUS`) were team-annotated by our project team via manual cross-examination against ground-truth source text without seeing model outputs.
 - **Quota Preservation:** All evaluations utilize disk-based caching (`backend/cache/`) so evaluations run deterministically and can be reproduced without burning API quotas.
 
 ### Comparative Evaluation Results
 
-| Evaluation Metric / Capability | (a) LLM-Only Verifier | (b) BM25 + Verifier | (c) Second Opinion Full Pipeline | Architectural Differential |
+| Evaluation Metric / Capability | (a) LLM-Only Verifier | (b) BM25 + Verifier | (c) Second Opinion Full Pipeline | Architectural Advantage |
 |:---|:---:|:---:|:---:|:---|
-| **Overall Claim Accuracy** | 88.1% (37/42) | 88.1% (37/42) | **100.0% (42/42)** | Full Pipeline leads by +11.9% |
-| **Contradiction Precision** | 100.0% | 100.0% | **100.0%** | Zero false contradiction flags across all systems |
-| **Contradiction Recall** | 57.1% | 85.7% | **100.0%** | Full Pipeline catches subtle numeric & negation errors |
-| **Contradiction F1-Score** | 72.7% | 92.3% | **100.0%** | +27.3 points over single-prompt LLM |
-| **Unsupported F1-Score** | 85.7% | 60.0% | **100.0%** | Accurately isolates unbacked assertions |
-| **Ambiguity / Conflict Handling** | 0.0% (binary only) | 0.0% (binary only) | **100.0%** | Explicitly surfaces multi-passage contractual conflicts |
-| **Prompt Injection Defense** | **FAILED** (directive obeyed) | **PARTIAL** (directive leaked) | **100% BLOCKED** | Delimiter isolation strictly immunizes pipeline |
-| **Programmatic Quote Verification**| ❌ None (accepts hallucinations) | ❌ None | **3-Tier Match** | Verifies citations character-by-character in source |
-| **Benign Claim False Positive Rate**| 0.0% | 6.5% | **0.0%** | Zero false alarms on control cases |
+| **Overall Claim Accuracy (Fair Baselines)** | 97.6% (41/42) | 92.9% (39/42) | **100.0% (42/42)** | +7.1% over BM25, +2.4% over LLM-Only |
+| **Overall Claim Accuracy (Naive Baselines)** | 85.7% (36/42) | 88.1% (37/42) | **100.0% (42/42)** | +11.9% over BM25, +14.3% over LLM-Only |
+| **Contradiction Precision** | 100.0% | 100.0% | **100.0%** | Tied across systems (100.0%) |
+| **Contradiction Recall** | 85.7% | 100.0% | **100.0%** | 0.0% over BM25, +14.3% over LLM-Only |
+| **Contradiction F1-Score** | 92.3% | 100.0% | **100.0%** | 0.0 pts over BM25, +7.7 pts over LLM-Only |
+| **Unsupported F1-Score** | 100.0% | 88.9% | **100.0%** | +11.1 pts over BM25, 0.0 pts over LLM-Only |
+| **Ambiguity / Conflict F1-Score** | 100.0% | 0.0% | **100.0%** | +100.0 pts over BM25, 0.0 pts over LLM-Only |
+| **False Positive Rate (Benign Control)** | 0.0% | 0.0% | **0.0%** | 0.0% lower FPR than BM25, 0.0% lower than LLM-Only |
+| **Prompt Injection Defense** | 100% BLOCKED (Fair prompt) | 100% BLOCKED (Fair prompt) | **100% BLOCKED** | Design note: Full Pipeline isolates source text in explicit syntactic delimiters rather than relying solely on prompt adherence |
+| **Programmatic Quote Verification**| ❌ None (accepts hallucinations) | ❌ None | **3-Tier Match** | Design note: Full Pipeline rejects hallucinated quotes via deterministic 3-tier string matching |
 
 ### Where Second Opinion Wins
 1. **Prompt Injection Resistance:** Delimiter isolation (`<SOURCE_DOCUMENT>`) strictly bounds untrusted user text, preventing adversarial jailbreak instructions from hijacking verification judgments.

@@ -216,6 +216,8 @@ async def _judge_batch(
                 evidence_status=evidence_status,
                 needs_human_review=needs_review,
                 human_review_reason=human_review_reason,
+                parent_sentence_id=claim.parent_sentence_id,
+                parent_sentence_text=claim.parent_sentence_text,
             )
         )
 
